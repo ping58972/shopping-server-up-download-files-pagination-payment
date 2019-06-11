@@ -12,37 +12,56 @@ const ITEMS_PER_PAGE = 2;
 
 
 exports.getProducts = (req, res, next)=>{
-    Product.find()
-    .then((products) =>{
-       res.render('shop/product-list', 
+  //   Product.find()
+  //   .then((products) =>{
+  //      res.render('shop/product-list', 
+  //   {prods: products,
+  //    pageTitle: 'All Products', 
+  //    path: '/products',
+  //   });
+  //   }).catch(err=>{ 
+  //     const error = new Error(err);
+  //     error.httpStatusCode = 500;
+  //     return next(error); 
+  // });
+  const page = +req.query.page || 1;
+  let totalItems;
+   Product.find()
+   .countDocuments()
+   .then(unmProducts => {
+    totalItems = unmProducts;
+     return Product.find()
+    .skip((page-1) * ITEMS_PER_PAGE)
+    .limit(ITEMS_PER_PAGE)
+    .then(products=>{
+      res.render('shop/product-list', 
     {prods: products,
-     pageTitle: 'All Products', 
+     pageTitle: 'Product', 
      path: '/products',
+    // totalProducts: totalItems,
+    currentPage: page,
+     hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+     hasPreviousPage: page > 1,
+     nextPage: page + 1,
+     previousPage : page - 1,
+     lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE)
     });
     }).catch(err=>{ 
       const error = new Error(err);
       error.httpStatusCode = 500;
       return next(error); 
   });
- }
-exports.getProduct = (req, res, next)=>{
-   const prodId = req.params.productId;
-   Product.findById(prodId).then((product)=>{
-      res.render('shop/product-detail', 
-      {product: product, 
-         pageTitle: product.title, 
-         path:'/products',
-      });
-   }).catch(err=>{ 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error); 
-});
+  }); 
  }
 
  exports.getIndex = (req, res, next) => {
-   const page = req.query.page;
-    Product.find()
+   const page = +req.query.page || 1;
+  let totalItems;
+   Product.find()
+   .countDocuments()
+   .then(unmProducts => {
+    totalItems = unmProducts;
+     return Product.find()
     .skip((page-1) * ITEMS_PER_PAGE)
     .limit(ITEMS_PER_PAGE)
     .then(products=>{
@@ -50,14 +69,37 @@ exports.getProduct = (req, res, next)=>{
     {prods: products,
      pageTitle: 'Shop', 
      path: '/',
+    // totalProducts: totalItems,
+    currentPage: page,
+     hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+     hasPreviousPage: page > 1,
+     nextPage: page + 1,
+     previousPage : page - 1,
+     lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE)
     });
     }).catch(err=>{ 
       const error = new Error(err);
       error.httpStatusCode = 500;
       return next(error); 
   });
-    
+  }); 
  }
+
+ exports.getProduct = (req, res, next)=>{
+  const prodId = req.params.productId;
+  Product.findById(prodId).then((product)=>{
+     res.render('shop/product-detail', 
+     {product: product, 
+        pageTitle: product.title, 
+        path:'/products',
+     });
+  }).catch(err=>{ 
+   const error = new Error(err);
+   error.httpStatusCode = 500;
+   return next(error); 
+});
+}
+
  exports.getCart = (req, res, next) => {
     req.user.populate('cart.items.productId')
     .execPopulate()
