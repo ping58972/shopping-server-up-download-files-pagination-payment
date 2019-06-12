@@ -63,19 +63,19 @@ app.use(session({
 app.use(csrfProtection);
 app.use(flash());
 app.use((req, res, next) => {
+    if (req.url === "/create-order") {
+      next();
+    } else {
+      csrfProtection(req, res, next);
+    }
+  });
+app.use((req, res, next) => {
     res.locals.isAuthenticated = req.session.isLoggedIn;
-    res.locals.csrfToken = req.csrfToken();
+    //res.locals.csrfToken = req.csrfToken();
+    res.locals.csrfToken = req["csrfToken"] ? req.csrfToken() : "";
     next();
 });
 
-// app.use((req, res, next)=>{
-//     User.findById('5cf8915ffcf7093404b2dca4').then(user=> {
-//     //User.findById(req.session.user._id).then(user=> {
-//         req.user = user;
-//        // req.isLoggedIn = true;
-//         next();
-//     }).catch(err=>console.log(err));
-// });
 
 app.use((req, res, next) => {
     if(!req.session.user){
@@ -105,24 +105,14 @@ app.use('/500', productController.get500);
 app.use(productController.get404);
 app.use((error, req, res, next) => {
     //res.status(error.httpStateCode).render(...);
+    console.log(error);
     res.redirect('/500');
 });
 
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true })
 .then(result => {
-    // User.findOne().then(user => {
-    //     if(!user){
-    //         const user = new User({
-    //             name: 'Ping',
-    //             email: 'me@ping58972.com',
-    //             cart:{
-    //                 items: []
-    //             }
-    //         });
-    //         user.save();
-    //     }
-    // });
+    
     app.listen(3000);
 }).catch(err=>console.log(err));
 
